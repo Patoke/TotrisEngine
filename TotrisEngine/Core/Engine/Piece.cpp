@@ -68,6 +68,7 @@ void CPiece::MoveEvent() {
 	
 	// update position and stop at the bottom of the board
 	// 3 = y bottom, 1 = x center
+	// @todo: do this right
 	bool isNotColliding = m_arrPieceBounds[3][1] == 1 ? m_vecPivot.y != numYGrids - 2 : m_vecPivot.y != numYGrids - 1;
 	if (isNotColliding)
 		m_vecPivot.y++;
