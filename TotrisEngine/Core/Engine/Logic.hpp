@@ -8,7 +8,7 @@ public:
 	CGame(SDL_Rect m_rBounds) : m_rBounds(m_rBounds) {}
 
 	void Render();
-	void Input();
+	void Input(SDL_Event event);
 
 private:
 	void Logic();

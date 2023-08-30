@@ -179,6 +179,7 @@
     </ClCompile>
     <ClCompile Include="Core\Engine\Logic.cpp" />
     <ClCompile Include="Core\Engine\Piece.cpp" />
+    <ClCompile Include="Core\Engine\Util\Tetromino.cpp" />
     <ClCompile Include="Core\TotrisEngine.cpp" />
   </ItemGroup>
   <ItemGroup>

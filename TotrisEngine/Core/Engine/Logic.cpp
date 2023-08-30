@@ -1,24 +1,24 @@
 #include <pch.h>
 #include "Logic.hpp"
 
+static CPiece testPiece{ PIECE_I, {5, 0} };
 void CGame::Render() {
 	this->Logic();
 	this->RenderBoard();
 }
 
-void CGame::Input() {
-
+void CGame::Input(SDL_Event event) {
+	testPiece.OnInput(event);
 }
 
 static int iCurrFrame = 0;
 void CGame::Logic() {
 	iCurrFrame++;
 
-	if (iCurrFrame % 20)
+	if (iCurrFrame % testPiece.m_iUpdateRate)
 		return;
 	iCurrFrame = 0; // prevent integer overflow
 
-	static CPiece testPiece{ PIECE_S, {5, 0} };
 	testPiece.MoveEvent();
 }
 

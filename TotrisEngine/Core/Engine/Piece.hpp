@@ -3,8 +3,10 @@
 
 constexpr int numXGrids = 10;
 constexpr int numYGrids = 22;
-constexpr int pieceMaxX = 5;
-constexpr int pieceMaxY = 5;
+constexpr int pieceMaxX = 4;
+constexpr int pieceMaxY = 4;
+constexpr int defaultUpdateRate = 20;
+constexpr int pieceMaxRotations = 4;
 
 enum EPieceType {
 	PIECE_O,
@@ -17,17 +19,22 @@ enum EPieceType {
 	PIECE_MAX
 };
 
-extern char g_pieceBounds[PIECE_MAX][pieceMaxY][pieceMaxX];
+extern std::array<std::vector<PieceMatrix_t>, PIECE_MAX> g_pieceBounds;
 extern char g_arrGrids[numXGrids][numYGrids];
 
 class CPiece {
+private:
+	int m_iRotation = 0;
+	bool m_bCanMovePiece = true;
+	bool m_bIsPressingDown = false;
 public:
 	CPiece(EPieceType piece, SVec2 vecPos);
 
 	void MoveEvent();
 	void UpdatePiece(bool destroy = false);
+	void OnInput(SDL_Event event);
 
 	EPieceType m_ePieceType;
 	SVec2 m_vecPivot;
-	char m_arrPieceBounds[pieceMaxY][pieceMaxX];
+	int m_iUpdateRate = defaultUpdateRate;
 };

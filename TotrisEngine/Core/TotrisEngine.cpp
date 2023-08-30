@@ -22,7 +22,7 @@ int WINAPI wWinMain([[maybe_unused]] HINSTANCE hInstance,
 
 	while (!g_pWindow->HasToExit()) {
 		g_pWindow->RunInput([](SDL_Event event) {
-			g_pGame->Input();
+			g_pGame->Input(event);
 			});
 
 		g_pWindow->SetRenderColor({ 25, 25, 25, 255 });
