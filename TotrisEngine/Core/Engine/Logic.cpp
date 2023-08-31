@@ -1,7 +1,7 @@
 #include <pch.h>
 #include "Logic.hpp"
 
-static CPiece testPiece{ PIECE_I, {5, 0} };
+static CPiece testPiece{ PIECE_S, {5, 8} };
 void CGame::Render() {
 	this->Logic();
 	this->RenderBoard();
@@ -25,7 +25,10 @@ void CGame::Logic() {
 void CGame::RenderBoard() {
 	int scoreBoardX = m_rBounds.x + m_rBounds.w - m_rBounds.w / 3;
 	SDL_Rect playArea = { m_rBounds.x, m_rBounds.y, m_rBounds.w - m_rBounds.w / 3, m_rBounds.h };
-	SVec2 gridBox = { playArea.w / numXGrids, playArea.h / numYGrids };
+	// this is to avoid big tetrominos from clipping into other lanes
+	int extraYSize = (playArea.h / (numYGrids - 2)) * 2;
+
+	SVec2 gridBox = { playArea.w / numXGrids, (playArea.h + extraYSize) / numYGrids };
 
 	g_pWindow->DrawRect(m_rBounds, { 255, 100, 100, 255 });
 	g_pWindow->DrawLine({ scoreBoardX, m_rBounds.y}, { scoreBoardX, m_rBounds.y + m_rBounds.h - 1 }, { 255, 100, 100, 255 });
@@ -33,7 +36,7 @@ void CGame::RenderBoard() {
 	// Test draw grids
 	for (int gridX = 0; gridX < numXGrids; gridX++) {
 		for (int gridY = 0; gridY < numYGrids; gridY++) {
-			SDL_Rect currGrid = { playArea.x + gridBox.x * gridX, playArea.y + gridBox.y * gridY, gridBox.x, gridBox.y };
+			SDL_Rect currGrid = { playArea.x + gridBox.x * gridX, playArea.y - extraYSize + gridBox.y * gridY, gridBox.x, gridBox.y };
 
 			if (g_arrGrids[gridX][gridY] == 2)
 				g_pWindow->DrawRectFilled(currGrid, { 100, 100, 255, 255 });
