@@ -22,6 +22,8 @@
 #include <format>
 #include <numbers>
 #include <print>
+#include <bitset>
+#include <random>
 #include <assert.h>
 
 // SDL (m_pRenderer) headers

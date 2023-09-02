@@ -13,6 +13,8 @@ public:
 private:
 	void Logic();
 	void RenderBoard();
+
+	CPiece m_cCurrPiece{};
 };
 
 extern std::shared_ptr<CGame> g_pGame;

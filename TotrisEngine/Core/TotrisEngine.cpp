@@ -13,7 +13,6 @@ int WINAPI wWinMain([[maybe_unused]] HINSTANCE hInstance,
 #ifdef _DEBUG
 	AllocConsole();
 	freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
-	freopen_s(reinterpret_cast<FILE**>(stdin), "CONIN$", "r", stdin);
 #endif
 
 	// specify main m_pWindow bounds and name
