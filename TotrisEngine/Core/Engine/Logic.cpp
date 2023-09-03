@@ -10,13 +10,12 @@ void CGame::Input(SDL_Event event) {
 	m_cCurrPiece.OnInput(event);
 }
 
-static int iCurrFrame = 0;
 void CGame::Logic() {
-	iCurrFrame++;
+	m_iCurrFrame++;
 
-	if (iCurrFrame % m_cCurrPiece.m_iUpdateRate)
+	if (m_iCurrFrame % m_cCurrPiece.m_iUpdateRate)
 		return;
-	iCurrFrame = 0; // prevent integer overflow
+	m_iCurrFrame = 0; // prevent integer overflow
 
 	m_cCurrPiece.MoveEvent();
 }
@@ -29,18 +28,21 @@ void CGame::RenderBoard() {
 
 	SVec2 gridBox = { playArea.w / numXGrids, (playArea.h + extraYSize) / numYGrids };
 
-	// Test draw grids
+	// draw grids
 	for (int gridX = 0; gridX < numXGrids; gridX++) {
 		for (int gridY = yGiveRoom; gridY < numYGrids; gridY++) {
 			SDL_Rect currGrid = { playArea.x + gridBox.x * gridX, playArea.y - extraYSize + gridBox.y * gridY, gridBox.x, gridBox.y };
 
-			if (g_arrGrids[gridX][gridY] == 2)
+			if (g_arrGrids[gridY][gridX] == 2)
 				g_pWindow->DrawRectFilled(currGrid, { 100, 100, 255, 255 });
-			else if(g_arrGrids[gridX][gridY] == 1)
+			else if(g_arrGrids[gridY][gridX] == 1)
 				g_pWindow->DrawRectFilled(currGrid, { 100, 255, 100, 255 });
 		}
 	}
 
+	// update score counter at the window name
+	SDL_SetWindowTitle(g_pWindow->GetWindow(), std::format("Totris (Score: {})", m_iScore).c_str());
+	
 	g_pWindow->DrawRect(m_rBounds, { 255, 100, 100, 255 });
 	g_pWindow->DrawLine({ scoreBoardX, m_rBounds.y }, { scoreBoardX, m_rBounds.y + m_rBounds.h - 1 }, { 255, 100, 100, 255 });
 }

@@ -21,16 +21,8 @@ enum EPieceType : char {
 	PIECE_MAX
 };
 
-enum ECollideType : char {
-	COLLIDE_NONE = (1 << 0),
-	COLLIDE_LEFT = (1 << 1),
-	COLLIDE_DOWN = (1 << 2),
-	COLLIDE_RIGHT = (1 << 3),
-	COLLIDE_FLOOR = (1 << 4)
-};
-
 extern std::bitset<pieceMaxX> g_pieceBounds[PIECE_MAX][pieceMaxRotations][pieceMaxY];
-extern std::bitset<1> g_arrGrids[numXGrids][numYGrids];
+extern std::bitset<1> g_arrGrids[numYGrids][numXGrids];
 
 class CPiece {
 private:
@@ -40,9 +32,9 @@ private:
 	bool m_bIsPressingDown = false;
 
 	void ResetPiece();
-	void DoLineClear();
+	void DoLineChecks();
 	void RotatePiece(int dir);
-	ECollideType CollisionTest();
+	bool CollisionTest(bool isXMovement);
 public:
 	CPiece();
 

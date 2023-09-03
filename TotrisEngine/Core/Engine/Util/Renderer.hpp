@@ -50,17 +50,17 @@ public:
 	}
 
 	void RunInput(std::function<void(SDL_Event)> on_input) {
-        SDL_Event event;
+		SDL_Event event;
 
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-            case SDL_QUIT: m_bExit = true; break; 
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_QUIT: m_bExit = true; break;
 			}
 
 			on_input(event);
-        }
+		}
 	}
-	
+
 	void CreateFrame() {
 		SDL_RenderClear(m_pRenderer);
 	}
@@ -71,6 +71,8 @@ public:
 		// calculates to 60 fps
 		SDL_Delay(1000 / 60);
 	}
+
+	SDL_Window* GetWindow() { return m_pWindow; }
 };
 
 extern std::shared_ptr<CWindow> g_pWindow;

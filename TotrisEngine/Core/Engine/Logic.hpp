@@ -10,10 +10,13 @@ public:
 	void Render();
 	void Input(SDL_Event event);
 
+	int m_iScore = 0;
+
 private:
 	void Logic();
 	void RenderBoard();
 
+	int m_iCurrFrame = 0;
 	CPiece m_cCurrPiece{};
 };
 

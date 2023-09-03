@@ -1,7 +1,8 @@
 #include <pch.h>
 #include "Piece.hpp"
+#include "Logic.hpp" // @todo: this includes Piece.hpp, maybe remove the include above?
 
-std::bitset<1> g_arrGrids[numXGrids][numYGrids] = {0b0};
+std::bitset<1> g_arrGrids[numYGrids][numXGrids] = {0b0};
 
 CPiece::CPiece() {
 	ResetPiece();
@@ -12,13 +13,13 @@ void CPiece::MoveEvent() {
 	UpdatePiece(true); // destroy the previous placement of the piece
 
 	m_vecPivot.y++;
-	
-	ECollideType collider = CollisionTest();
-	if (collider & COLLIDE_FLOOR || collider & COLLIDE_DOWN) {
-		m_vecPivot.y--; // stop down movement
 
+	bool placedPiece = CollisionTest(false);
+	if (placedPiece) {
 		UpdatePiece(); // draw piece that collided
-	
+
+		DoLineChecks(); // clear line
+		
 		ResetPiece();
 	}
 
@@ -30,9 +31,10 @@ void CPiece::UpdatePiece(bool destroy) {
 		for (int gridY = 0; gridY < pieceMaxY; gridY++) {
 			SVec2 boardGrids = { (m_vecPivot.x - 2) + gridX, (m_vecPivot.y - 2) + gridY };
 			bool isPieceBlock = g_pieceBounds[m_ePieceType][m_iRotation][gridY][gridX];
+			char offBoundsTo = boardGrids.x < 0 ? 1 : boardGrids.x >= numXGrids ? -1 : 0;
 
 			if (isPieceBlock)
-				g_arrGrids[boardGrids.x][boardGrids.y] = destroy ? !destroy : isPieceBlock;
+				g_arrGrids[boardGrids.y][boardGrids.x] = destroy ? !destroy : isPieceBlock;
 		}
 	}
 }
@@ -78,10 +80,6 @@ void CPiece::OnInput(SDL_Event event) {
 			
 			m_vecPivot.x += moveDir;
 
-			ECollideType collider = CollisionTest();
-			if (collider & COLLIDE_LEFT || collider & COLLIDE_RIGHT)
-				m_vecPivot.x -= moveDir; // stop movement to our direction
-
 			// make sure we update the piece
 			updatePiece = true;
 
@@ -101,10 +99,13 @@ void CPiece::OnInput(SDL_Event event) {
 		}
 
 		// move down faster if we pressing down
-		m_iUpdateRate = scanCode == SDL_SCANCODE_DOWN ? defaultUpdateRate - updateRateFasten : defaultUpdateRate;
+		if (scanCode == SDL_SCANCODE_DOWN)
+			m_iUpdateRate = defaultUpdateRate - updateRateFasten;
 	
-		if (updatePiece)
+		if (updatePiece) {
+			CollisionTest(true); // we don't care if we need to place a piece here
 			UpdatePiece();
+		}
 
 		break;
 
@@ -144,8 +145,75 @@ void CPiece::ResetPiece() {
 	m_vecPivot = SVec2(5, yGiveRoom); // move back to top
 }
 
-void CPiece::DoLineClear() {
-	// @todo: implement this
+void CPiece::DoLineChecks() {
+	char linesCleared = 0;
+
+	// do line order checks from each y row thru each x column
+	for (int gridY = 0; gridY < numYGrids; gridY++) {
+		bool isLineClear = true;
+
+		for (int gridX = 0; gridX < numXGrids; gridX++) {
+			bool isUsedBlock = g_arrGrids[gridY][gridX][0];
+
+			if (!isUsedBlock) {
+				isLineClear = false;
+				continue;
+			}
+
+			if (gridY < yGiveRoom) {
+				// @todo: clear all lines for game over
+				break;
+			}
+		}
+
+		if (!isLineClear)
+			continue;
+
+		// for scoring system
+		linesCleared++;
+
+		// clear line @todo: move this inside the other loop?
+		for (int gridX = 0; gridX < numXGrids; gridX++)
+			g_arrGrids[gridY][gridX][0] = 0b0;
+
+		// bring pieces down @todo: do it better?
+		std::bitset<numXGrids> lastRow;
+		std::bitset<numXGrids> currentRow;
+		// only move lines above the line clear
+		for (int clearY = 0; clearY <= gridY; clearY++) {
+			for (int clearX = 0; clearX < numXGrids; clearX++) {
+				if (clearY == 0) {
+					lastRow[clearX] = g_arrGrids[clearY][clearX][0];
+				}
+				else {
+					currentRow[clearX] = g_arrGrids[clearY][clearX][0];
+
+					g_arrGrids[clearY][clearX][0] = lastRow[clearX];
+				}
+			}
+
+			if(clearY != 0)
+				lastRow = currentRow;
+		}
+
+	}
+
+	// add score up (BPS scoring system)
+	// @todo: maybe do operations with strings so we don't run risk of integer overflow?
+	switch (linesCleared) {
+	case 1:
+		g_pGame->m_iScore += 40;
+		break;
+	case 2:
+		g_pGame->m_iScore += 100;
+		break;
+	case 3:
+		g_pGame->m_iScore += 300;
+		break;
+	case 4:
+		g_pGame->m_iScore += 1200;
+		break;
+	}
 }
 
 void CPiece::RotatePiece(int dir) {
@@ -175,63 +243,49 @@ void CPiece::RotatePiece(int dir) {
 }
 
 // function called after doing a movement to check if in that future movement we're gonna collide
-ECollideType CPiece::CollisionTest() {
-	int outType = COLLIDE_NONE;
-	bool shouldItMap = false;
-	std::bitset<pieceMaxX> collideMap[pieceMaxY] = { 0b0 };
+bool CPiece::CollisionTest(bool isXMovement) {
+	bool shouldPlacePiece = false;
 
 	for (int gridX = 0; gridX < pieceMaxX; gridX++) {
 		for (int gridY = 0; gridY < pieceMaxY; gridY++) {
 			SVec2 boardGrids = { (m_vecPivot.x - 2) + gridX, (m_vecPivot.y - 2) + gridY };
 			bool isPieceBlock = g_pieceBounds[m_ePieceType][m_iRotation][gridY][gridX];
-			bool isUsedBlock = g_arrGrids[boardGrids.x][boardGrids.y][0];
+			bool isUsedBlock = g_arrGrids[boardGrids.y][boardGrids.x][0];
 
 			if (!isPieceBlock)
 				continue;
 
-			// check if we're colliding with the floor first
-			if (boardGrids.y >= numYGrids) {
-				outType |= COLLIDE_FLOOR;
+			// we are not colliding with any blocks so we must be colliding with game bounds
+			if (!isUsedBlock) {
+				// check if we're colliding with the floor
+				if (!isXMovement && boardGrids.y >= numYGrids) {
+					m_vecPivot.y--; // null movement
+					shouldPlacePiece = true;
+				}
+
+				// check if we're colliding with the walls
+				if (isXMovement)
+					if (boardGrids.x < 0)
+						m_vecPivot.x++;
+					else if (boardGrids.x >= numXGrids)
+						m_vecPivot.x--;
+
+				continue;
 			}
 
-			// check if we're colliding with the walls
-			if (boardGrids.x < 0)
-				outType |= COLLIDE_LEFT;
-			else if (boardGrids.x >= numXGrids)
-				outType |= COLLIDE_RIGHT;
+			// do block collisions
+			if (!isXMovement && gridY >= 1) {
+				m_vecPivot.y--;
+				shouldPlacePiece = true;
+			}
 
-			// we are not colliding, stop execution
-			if (!isUsedBlock)
-				continue;
-
-			// populate collision map
-			shouldItMap = true;
-			collideMap[gridX][gridY] = 0b1;
+			if (isXMovement)
+				if (gridX < 2)
+					m_vecPivot.x++;
+				else if (gridX > 2)
+					m_vecPivot.x--;
 		}
 	}
 	
-	// iterate collision map
-	if (!shouldItMap)
-		return ECollideType(outType);
-
-	// @todo: maybe embed the collideMap functionality directly in the other loop?
-	for (int collX = 0; collX < pieceMaxX; collX++) {
-		for (int collY = 0; collY < pieceMaxY; collY++) {
-			bool collided = collideMap[collX][collY];
-
-			if (!collided)
-				continue;
-
-			// @todo: this is a horrible way to check for down colliders, please change
-			if (collY == pieceMaxY - 1)
-				outType |= COLLIDE_DOWN;
-		
-			if (collX < 2)
-				outType |= COLLIDE_LEFT;
-			else if (collX > 2)
-				outType |= COLLIDE_RIGHT;
-		}
-	}
-
-	return ECollideType(outType);
+	return shouldPlacePiece;
 }
