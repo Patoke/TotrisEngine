@@ -1,7 +1,7 @@
 
 # TotrisEngine
 
-Small and stupid Tetris game engine written in C++
+Small and stupid Tetris game engine written in C++ using SDL2
 
 ## License
 
